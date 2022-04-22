@@ -33,4 +33,13 @@ def make_generators_generator(g):
     9
     """
     "*** YOUR CODE HERE ***"
+    def generator(n):
+        yield from lst[:n]
+    
+    n = 1
+    lst = list(g())
+    for e in lst:
+        yield generator(n)
+        n = n + 1
+
 
