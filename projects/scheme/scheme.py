@@ -3,6 +3,8 @@ from __future__ import print_function  # Python 2 compatibility
 
 import sys
 
+from pyrsistent import v
+
 from scheme_builtins import *
 from scheme_reader import *
 from ucb import main, trace
@@ -36,6 +38,13 @@ def scheme_eval(expr, env, _=None): # Optional third argument is ignored
     else:
         # BEGIN PROBLEM 4
         "*** YOUR CODE HERE ***"
+    
+        procedure = scheme_eval(first, env)
+       
+        validate_procedure(procedure)
+
+        args = rest.map(lambda x: scheme_eval(x, env))
+        return scheme_apply(procedure, args, env)
         # END PROBLEM 4
 
 def self_evaluating(expr):
@@ -68,6 +77,13 @@ def eval_all(expressions, env):
     2
     """
     # BEGIN PROBLEM 7
+    if expressions is nil:
+        return None
+
+    while expressions.rest is not nil:
+        scheme_eval(expressions.first, env)
+        expressions = expressions.rest
+        
     return scheme_eval(expressions.first, env) # change this line
     # END PROBLEM 7
 
@@ -93,12 +109,18 @@ class Frame(object):
         """Define Scheme SYMBOL to have VALUE."""
         # BEGIN PROBLEM 2
         "*** YOUR CODE HERE ***"
+        self.bindings[symbol] = value
         # END PROBLEM 2
 
     def lookup(self, symbol):
         """Return the value bound to SYMBOL. Errors if SYMBOL is not found."""
         # BEGIN PROBLEM 2
         "*** YOUR CODE HERE ***"
+        if symbol in self.bindings.keys():
+            return self.bindings[symbol]
+
+        if self.parent:
+            return self.parent.lookup(symbol)    
         # END PROBLEM 2
         raise SchemeError('unknown identifier: {0}'.format(symbol))
 
@@ -154,6 +176,19 @@ class BuiltinProcedure(Procedure):
         python_args = []
         # BEGIN PROBLEM 3
         "*** YOUR CODE HERE ***"
+
+        while args is not nil:
+            python_args.append(args.first)
+            args = args.rest
+
+        if self.use_env:
+            python_args.append(env)
+
+        try:
+
+            return self.fn(*python_args)    
+        except TypeError:
+            raise SchemeError('wrong number of arguments were passed', self.fn, python_args)     
         # END PROBLEM 3
 
 class LambdaProcedure(Procedure):
@@ -234,6 +269,16 @@ def do_define_form(expressions, env):
         validate_form(expressions, 2, 2) # Checks that expressions is a list of length exactly 2
         # BEGIN PROBLEM 5
         "*** YOUR CODE HERE ***"
+   
+        rest = expressions.rest.first # expression is Pair(A, Pair(B, nil)), make rest be B
+
+        if isinstance(rest, Pair):
+            value = scheme_eval(rest, env)
+        else:
+            value = rest
+     
+        env.define(target, value)
+        return target
         # END PROBLEM 5
     elif isinstance(target, Pair) and scheme_symbolp(target.first):
         # BEGIN PROBLEM 9
@@ -253,6 +298,7 @@ def do_quote_form(expressions, env):
     validate_form(expressions, 1, 1)
     # BEGIN PROBLEM 6
     "*** YOUR CODE HERE ***"
+    return expressions.first
     # END PROBLEM 6
 
 def do_begin_form(expressions, env):
