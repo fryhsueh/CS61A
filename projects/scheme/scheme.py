@@ -2,6 +2,7 @@
 from __future__ import print_function  # Python 2 compatibility
 
 import sys
+from cairo import RasterSourcePattern
 
 from pyrsistent import v
 
@@ -138,6 +139,24 @@ class Frame(object):
         """
         # BEGIN PROBLEM 10
         "*** YOUR CODE HERE ***"
+        child_frame = Frame(self)
+        
+        
+        while formals is not nil:
+            try:
+                formal, val = formals.first, vals.first
+            except AttributeError:
+                raise SchemeError("number of araument and valuse dose not match!")
+          
+            child_frame.define(formal, val)
+
+            formals, vals = formals.rest, vals.rest
+
+
+        if vals is not nil:
+            raise SchemeError('too many vals!')
+
+        return child_frame    
         # END PROBLEM 10
 
 ##############
@@ -210,6 +229,7 @@ class LambdaProcedure(Procedure):
         of values, for a lexically-scoped call evaluated in my parent environment."""
         # BEGIN PROBLEM 11
         "*** YOUR CODE HERE ***"
+        return self.env.make_child_frame(self.formals, args)
         # END PROBLEM 11
 
     def __str__(self):
